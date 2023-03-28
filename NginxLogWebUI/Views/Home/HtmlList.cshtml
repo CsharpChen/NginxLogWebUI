@@ -1,0 +1,83 @@
+﻿@{
+    ViewData["Title"] = "列表";
+}
+<script src="~/lib/layui/layui.js"></script>
+<link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+<br>
+<p>当前使用的路径为: @ViewBag.NowPath</p>
+<br>
+<button class="layui-btn layui-btn-sm" onclick="createlog()">制作日志</button>
+<br>
+<table id="demo" lay-filter="test"></table>
+
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+      <button class="layui-btn layui-btn-sm" lay-event="see">查看</button>
+      <button class="layui-btn layui-btn-sm" lay-event="newopen">新页面打开</button>
+    </div>
+</script>
+
+<script>
+    function getUrlParam(name) {
+        //构造一个含有目标参数的正则表达式对象
+        var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+        //匹配目标参数
+        var r = window.location.search.substr(1).match(reg);
+        //返回参数值
+        if (r != null) {
+            return decodeURI(r[2]);
+        }
+        return null;
+    }
+    layui.use('table', function () {
+        var table = layui.table;
+
+        //第一个实例
+        table.render({
+            elem: '#demo'
+            , url: 'GetHtmlList?f=' + getUrlParam('f') //数据接口
+            , page: true //开启分页
+            , cols: [[ //表头
+                { field: 'f', title: '文件' }
+                , { field: 'd', title: '生成日期', sort: true }
+                , { field: 'dic', title: '文件路径' }
+                , { field: 's', title: '文件大小' }
+                , { field: 'o', title: '操作', toolbar: '#toolbarDemo' }
+            ]]
+        });
+        //触发事件
+        table.on('tool(test)', function (obj) {
+            console.log(obj.data)
+            switch (obj.event) {
+                case 'see':
+                    seehtml(obj.data.f)
+                    break;
+                case 'newopen':
+                    nopen(obj.data.f)
+                    break;
+            };
+        });
+    });
+    function seehtml(f) {
+        layer.open({
+            type: 2,
+            area: ['95%', '95%'],
+            content: '../../goaccess/' + getUrlParam('f') + '/' + f
+        });
+    }
+    function nopen(f) {
+        window.open('../../goaccess/' + getUrlParam('f') + '/' + f);
+    }
+
+    function createlog(){
+        var index = layer.open({
+            type: 2,
+            area: ['95%', '95%'],
+            content: 'createlog?f=' + getUrlParam('f'),
+            end:function(){
+                location.reload();
+            }
+        });
+    }
+
+</script>

@@ -1,0 +1,110 @@
+﻿@{
+    ViewData["Title"] = "开始使用";
+}
+<script src="~/lib/layui/layui.js"></script>
+<link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+<button id="addpath" type="button" class="layui-btn layui-btn-xs layui-btn-radius layui-btn-normal">添加目录</button>
+<button id="removepath" type="button" class="layui-btn layui-btn-xs layui-btn-radius layui-btn-danger">清空日志</button>
+
+<table class="table">
+    <caption>已选择日志目录</caption>
+    <thead>
+        <tr>
+            <th>目录</th>
+        </tr>
+    </thead>
+    <tbody id="flist">
+        <tr>
+        </tr>
+    </tbody>
+</table>
+<script>
+    $(function () {
+        init();
+        $("#addpath")
+            .button()
+            .click(function () {
+                layer.open({
+                    type: 1,
+                    area: ['500px', '180px'],
+                    title: '添加目录',
+                    content:
+                        '<div class="layui-form-item">' +
+                        '<label class="layui-form-label">名称</label>' +
+                        '<div class="layui-input-block">' +
+                        '<input type="text" name="fname" id="fname" lay-verify="required" placeholder="添加目录名称" class="layui-input">' +
+                        '</div>' +
+                        '</div>' +
+                        '<div class="layui-form-item">' +
+                        '<div class="layui-input-block">' +
+                        ' <button onclick="add()" class="layui-btn" lay-submit lay-filter="formDemo">添加</button>' +
+                        '</div>' +
+                        '</div>'
+                });
+            });
+        $("#removepath")
+            .button()
+            .click(function () {
+                $.ajax({
+                    url: "RemoveAll", success: function (result) {
+                        console.log(result);
+                        if (result.statusCode == 200) {
+                            layer.closeAll();
+                            layer.msg(result.reasonPhrase);
+                            init();
+                        }
+                        else {
+                            layer.msg(result.reasonPhrase);
+                        }
+                    }
+                });
+            });
+        
+    })
+    function init(){
+        $.ajax({
+            url: "GetRootFileList", success: function (result) {
+                console.log(result);
+                adddb(result)
+            }
+        });
+        
+    };
+    function add() {
+        var elmId = $("#fname").val();
+        if (!elmId || elmId == undefined || elmId == '' || elmId == null || !/[^\s]/.test(elmId)) {
+            layer.msg("请输入添加的目录名称");
+        }
+        else {
+            $.ajax({
+                url: "CreatePath?dir=" + elmId, success: function (result) {
+                    console.log(result);
+                    if (result.statusCode == 200) {
+                        layer.closeAll();
+                        layer.msg(result.reasonPhrase);
+                        init();
+                    }
+                    else{
+                        layer.msg(result.reasonPhrase);
+                    }
+                }
+            });
+        }
+    }
+    function seeall(f) {
+        layer.open({
+            type: 2,
+            area: ['95%', '95%'],
+            content: 'htmllist?f=' + f
+        });
+    }
+    function adddb(db){
+        $("#flist").replaceWith("<tbody id='flist'><tr></tr></tbody>");
+        var str = "";
+        for (var i = 0; i < db.length; i++){
+            //str += "<tr><td><a href='htmllist?f=" + db[i] + "'>" + db[i] + "</a></td></tr>";
+            str += "<tr><td><a href='javascript: void (0)' onclick='seeall(this.id)' id='" + db[i] + "' val='" + db[i] + "'>" + db[i] + "</a></td></tr>";
+        }
+        $("#flist").append(str);
+    }
+</script>

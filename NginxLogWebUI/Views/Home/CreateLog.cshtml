@@ -1,0 +1,120 @@
+﻿@{
+    ViewData["Title"] = "创建日志";
+}
+
+<script src="~/lib/layui/layui.js"></script>
+<link href="~/lib/layui/css/layui.css" rel="stylesheet" />
+<div class="layui-form-item">
+    <label class="layui-form-label">文件</label>
+    <div class="layui-input-block">
+        <input id="select" type="text" name="title" required lay-verify="required" placeholder="请选择日志文件" autocomplete="off" class="layui-input">
+    </div>
+    <label class="layui-form-label">目录</label>
+    <div class="layui-input-block">
+        <input id="nowpath" type="text" name="nowpath" required lay-verify="required" placeholder="当前目录" autocomplete="off" class="layui-input">
+    </div>
+    <button type="button" class="layui-btn layui-btn-xs" onclick="nowcreatelog()">生成html日志</button>
+    <button type="button" class="layui-btn layui-btn-xs" onclick="goroot()">返回主目录</button>
+
+</div>
+
+<div id="test1"></div>
+
+<script>
+    @{
+        string NowPath = ViewData["NowPath"] as string;
+        NowPath = NowPath.Replace("\\","\\\\");
+        var html = "$('#nowpath').val('" + NowPath + "');";
+        @Html.Raw(html);
+    }
+    var allinjson = null;
+    layui.use('tree', function () {
+        var tree = layui.tree;
+        //渲染
+        var inst1 = tree.render({
+            elem: '#test1'  //绑定元素
+            , data: getdata()
+            , id: 'demoId'
+            , click: function (obj) {
+                if (obj.data.type == "wj") {
+                    layer.msg(obj.data.title);
+                    $('#select').val(obj.data.allname);
+                }
+                else if (obj.data.type == "wjj") {
+                    layer.msg(obj.data.allname);
+                    getdata2(obj.data);
+                }
+            }
+        });
+        function getdata2(allname) {
+            $.ajax({
+                url: "GetAllFileEntity?f=" + allname.allname,    //后台数据请求地址
+                type: "Get",
+                async: false,
+                success: function (resut) {
+                    var jsonobject = resut.allFileEntityToLayuiTrees;
+                    allinjson = jsonobject;
+                    //console.log(jsonobject);
+
+                    //for (i = 0; i < allinjson.length; i++) {
+                    //    if (allinjson[i].id == allname.id) {
+                    //        allinjson[i].children = jsonobject;
+                    //    }
+                    //}
+                    console.log(allinjson);
+                    tree.render({
+                        elem: '#test1'  //绑定元素
+                        , data: allinjson
+                        , id: 'demoId'
+                        , click: function (obj) {
+                            if (obj.data.type == "wj") {
+                                layer.msg(obj.data.title);
+                                $('#select').val(obj.data.allname);
+                            }
+                            else if (obj.data.type == "wjj") {
+                                layer.msg(obj.data.allname);
+                                getdata2(obj.data);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    });
+    function nowcreatelog(){
+        var ff = $('#nowpath').val();
+        var oo = $('#select').val();
+        var gdt = { f: ff, o: oo };
+        console.log(gdt);
+        $.ajax({
+            url: "CLog",    //后台数据请求地址
+            type: "Get",
+            data: gdt,
+            success: function (resut) {
+                console.log(resut);
+                console.log(layer.index);
+                var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+                parent.layer.close(index); //再执行关闭
+            }
+        });
+    };
+    function getdata() {
+        if (allinjson == null) {
+            var data = [];
+            $.ajax({
+                url: "GetAllFileEntity",    //后台数据请求地址
+                type: "Get",
+                async: false,
+                success: function (resut) {
+                    var jsonobject = resut.allFileEntityToLayuiTrees;
+                    data = jsonobject;
+                }
+            });
+            allinjson = data;
+        }
+        return allinjson;
+    }
+    function goroot(){
+        location.reload();
+    }
+</script>
